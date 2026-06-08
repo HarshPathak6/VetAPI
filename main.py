@@ -1,6 +1,12 @@
-def main():
-    print("Hello from vetapi!")
+from fastapi import FastAPI
+from database import engine
+from models import Base
+
+app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
 
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+def home():
+    return {"message": "Vet API running"}
