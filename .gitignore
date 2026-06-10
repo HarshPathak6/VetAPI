@@ -15,3 +15,12 @@ vet.db
 # OS files
 Thumbs.db
 .DS_Store
+
+# Environment variables
+.env
+
+# UV lock file
+uv.lock
+
+# VS Code settings
+.vscode/
