@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from PetModels import Pet
-from schemas import PetCreate
-
+from schemas import PetCreate, VisitCreate
+from VisitModels import Visit
 
 def create_pet(db: Session, pet: PetCreate):
     db_pet = Pet(
@@ -18,6 +18,9 @@ def create_pet(db: Session, pet: PetCreate):
     db.refresh(db_pet)
 
     return db_pet
+
+def get_pets(db: Session):
+    return db.query(Pet).all()
 
 def get_pet(db: Session, pet_id: int):
     return db.query(Pet).filter(Pet.id == pet_id).first()
@@ -52,3 +55,36 @@ def delete_pet(db: Session, pet_id: int):
 
     return pet
     
+def create_visit(
+    db: Session,
+    pet_id: int,
+    visit_data: VisitCreate
+):
+    
+    db_visit = Visit(
+        pet_id=pet_id,
+        visit_date=visit_data.visit_date,
+        reason=visit_data.reason,
+        notes=visit_data.notes
+    )
+
+    db.add(db_visit)
+
+    db.commit()
+
+    db.refresh(db_visit)
+
+    return db_visit
+
+
+def get_pet_visits(
+    db: Session,
+    pet_id: int
+):
+    return (
+        db.query(Visit)
+        .filter(
+            Visit.pet_id == pet_id
+        )
+        .all()
+    )

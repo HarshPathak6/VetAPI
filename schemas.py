@@ -26,6 +26,7 @@ class PetResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+    
 
 class VisitCreate(BaseModel):
     visit_date: datetime
