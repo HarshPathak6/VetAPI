@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import engine, get_db
-from models import Base
+from PetModels import Base
 from schemas import PetCreate, PetResponse
 from crud import create_pet, get_pet, get_pet, update_pet, delete_pet
 
@@ -48,3 +48,20 @@ def edit_pet(
         )
 
     return updated_pet
+
+@app.delete("/pets/{pet_id}")
+def remove_pet(
+    pet_id: int,
+    db: Session = Depends(get_db)
+):
+    deleted_pet = delete_pet(db, pet_id)
+
+    if deleted_pet is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Pet not found"
+        )
+
+    return {
+        "message": "Pet deleted successfully"
+    }
