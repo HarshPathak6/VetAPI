@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import engine, get_db
-from models import Base
+from PetModels import Base, Pet
 from schemas import PetCreate, PetResponse
 from crud import create_pet, get_pet, get_pet, update_pet, delete_pet
+from VisitModels import Visit
 
 app = FastAPI()
 
