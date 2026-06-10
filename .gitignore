@@ -22,5 +22,3 @@ Thumbs.db
 # UV lock file
 uv.lock
 
-# VS Code settings
-.vscode/
