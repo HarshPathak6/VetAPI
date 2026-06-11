@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from PetModels import Pet
 from VisitModels import Visit
-from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse
+from OwnerModels import Owner
+from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, OwnerCreate, OwnerResponse
 from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits
+
 
 
 app = FastAPI()
@@ -150,3 +152,24 @@ def read_visits(
         db,
         pet_id
     )
+
+
+@app.post("/owners", response_model=OwnerResponse, tags=["Owners"])
+def create_owner(owner: OwnerCreate, db: Session = Depends(get_db)):
+
+    db_owner = Owner(
+        name=owner.name,
+        phone=owner.phone,
+        email=owner.email
+    )
+
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+
+    return db_owner
+
+@app.get("/owners", response_model=list[OwnerResponse], tags=["Owners"])
+def get_owners(db: Session = Depends(get_db)):
+
+    return db.query(Owner).all()

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -15,8 +15,8 @@ class Pet(Base):
     breed = Column(String)
     age = Column(Integer)
 
-    owner_name = Column(String)
-    owner_phone = Column(String)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    owner = relationship("Owner", back_populates="pets")
     # Timestamp when the pet record was created
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -29,3 +29,4 @@ class Pet(Base):
     cascade="all, delete-orphan",
     passive_deletes=True
 )
+    
