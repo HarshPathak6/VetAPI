@@ -56,3 +56,17 @@ class VisitResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+class OwnerCreate(BaseModel):
+    name: str
+    phone: str
+    email: str
+
+class OwnerResponse(BaseModel):
+    id: int
+    name: str
+    phone: str
+    email: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
