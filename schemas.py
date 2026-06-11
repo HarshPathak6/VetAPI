@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
-
+# Request schema used when creating or updating a pet
 class PetCreate(BaseModel):
     name: str
     species: str
@@ -11,7 +11,7 @@ class PetCreate(BaseModel):
     owner_name: str
     owner_phone: str
 
-
+# Response schema returned by pet-related endpoints
 class PetResponse(BaseModel):
     id: int
 
@@ -25,9 +25,11 @@ class PetResponse(BaseModel):
 
     created_at: datetime
 
+    # Allows conversion from SQLAlchemy objects to Pydantic models
     model_config = ConfigDict(from_attributes=True)
-    
 
+    
+# Request schema used when creating a visit record
 class VisitCreate(BaseModel):
     visit_date: datetime
 
@@ -36,6 +38,7 @@ class VisitCreate(BaseModel):
     notes: str
 
 
+# Response schema returned by visit-related endpoints
 class VisitResponse(BaseModel):
     id: int
 
@@ -49,6 +52,7 @@ class VisitResponse(BaseModel):
 
     created_at: datetime
 
+    # Allows conversion from SQLAlchemy objects to Pydantic models
     model_config = ConfigDict(
         from_attributes=True
     )
