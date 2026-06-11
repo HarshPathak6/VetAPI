@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
@@ -15,3 +16,9 @@ class Pet(Base):
     owner_name = Column(String)
     owner_phone = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
+    visits = relationship(
+    "Visit",
+    back_populates="pet",
+    cascade="all, delete-orphan",
+    passive_deletes=True
+)

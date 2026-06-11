@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from PetModels import Pet
@@ -17,9 +17,14 @@ def home():
     return {"message": "Vet API running"}
 
 
-@app.post("/pets", response_model=PetResponse)
+@app.post(
+    "/pets",
+    response_model=PetResponse,
+    status_code=status.HTTP_201_CREATED
+)
 def add_pet(pet: PetCreate, db: Session = Depends(get_db)):
     return create_pet(db, pet)
+
 
 @app.get("/pets", response_model=list[PetResponse])
 def read_all_pets(db: Session = Depends(get_db)):
@@ -56,7 +61,7 @@ def edit_pet(
     return updated_pet
 
 
-@app.delete("/pets/{pet_id}")
+@app.delete("/pets/{pet_id}", status_code=status.HTTP_200_OK)
 def remove_pet(
     pet_id: int,
     db: Session = Depends(get_db)
@@ -65,7 +70,7 @@ def remove_pet(
 
     if deleted_pet is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Pet not found"
         )
 
@@ -75,7 +80,8 @@ def remove_pet(
 
 @app.post(
     "/pets/{pet_id}/visits",
-    response_model=VisitResponse
+    response_model=VisitResponse,
+    status_code=status.HTTP_201_CREATED
 )
 def add_visit(
     pet_id: int,
