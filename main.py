@@ -12,7 +12,7 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 
-@app.get("/")
+@app.get("/", tags=["Home Page"])
 def home():
     return {"message": "Vet API running"}
 
@@ -20,19 +20,20 @@ def home():
 @app.post(
     "/pets",
     response_model=PetResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["Pets"]
 )
 def add_pet(pet: PetCreate, db: Session = Depends(get_db)):
 # Create a new pet record in the database
     return create_pet(db, pet)
 
 
-@app.get("/pets", response_model=list[PetResponse])
+@app.get("/pets", response_model=list[PetResponse],tags=["Pets"])
 def read_all_pets(db: Session = Depends(get_db)):
 # Retrieve all pets stored in the system
     return get_pets(db)
 
-@app.get("/pets/{pet_id}", response_model=PetResponse)
+@app.get("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
 def read_pet(pet_id: int, db: Session = Depends(get_db)):
 
 #Fetch pet by its unique ID
@@ -46,7 +47,7 @@ def read_pet(pet_id: int, db: Session = Depends(get_db)):
     return pet
 
 
-@app.put("/pets/{pet_id}", response_model=PetResponse)
+@app.put("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
 def edit_pet(
     pet_id: int,
     pet: PetCreate,
@@ -68,7 +69,7 @@ def edit_pet(
     return updated_pet
 
 
-@app.delete("/pets/{pet_id}", status_code=status.HTTP_200_OK)
+@app.delete("/pets/{pet_id}", status_code=status.HTTP_200_OK, tags=["Pets"])
 def remove_pet(
     pet_id: int,
     db: Session = Depends(get_db)
@@ -91,7 +92,8 @@ def remove_pet(
 @app.post(
     "/pets/{pet_id}/visits",
     response_model=VisitResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["Visits"]
 )
 def add_visit(
     pet_id: int,
@@ -122,7 +124,8 @@ def add_visit(
 
 @app.get(
     "/pets/{pet_id}/visits",
-    response_model=list[VisitResponse]
+    response_model=list[VisitResponse],
+    tags=["Visits"]
 )
 def read_visits(
     pet_id: int,
