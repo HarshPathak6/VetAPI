@@ -4,6 +4,7 @@ from schemas import PetCreate, VisitCreate
 from VisitModels import Visit
 from OwnerModels import Owner
 from sqlalchemy import asc, desc
+from datetime import datetime
 
 
 def create_pet(db: Session, pet: PetCreate):
@@ -38,7 +39,9 @@ def get_pets(
     sort_by="id",
     sort_order="asc"
 ):
-    query = db.query(Pet)
+    query = db.query(Pet).filter(
+    Pet.is_deleted == False
+)
 
     # Search by pet name
     if search:
@@ -110,7 +113,10 @@ def get_pets(
 
 def get_pet(db: Session, pet_id: int):
     #Search for a pet using its unique ID
-    return db.query(Pet).filter(Pet.id == pet_id).first()
+    return db.query(Pet).filter(
+    Pet.id == pet_id,
+    Pet.is_deleted == False
+    ).first()
 
 def update_pet(db: Session, pet_id: int, pet_data: PetCreate):
     # Find the pet that needs to be updated
@@ -143,10 +149,11 @@ def delete_pet(db: Session, pet_id: int):
     if pet is None:
         return None
 
-    #Delete pet and associated visits through cascade rules
-    db.delete(pet)
-    #Commit deletion to database
+    pet.is_deleted = True
+    pet.deleted_at = datetime.utcnow()
+
     db.commit()
+    db.refresh(pet)
 
     return pet
     

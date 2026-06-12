@@ -26,6 +26,11 @@ class PetResponse(BaseModel):
     # Allows conversion from SQLAlchemy objects to Pydantic models
     model_config = ConfigDict(from_attributes=True)
 
+    updated_at: datetime
+
+is_deleted: bool
+
+deleted_at: datetime | None = None
     
 # Request schema used when creating a visit record
 class VisitCreate(BaseModel):
