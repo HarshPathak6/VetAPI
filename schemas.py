@@ -23,15 +23,16 @@ class PetResponse(BaseModel):
 
     created_at: datetime
 
-    # Allows conversion from SQLAlchemy objects to Pydantic models
-    model_config = ConfigDict(from_attributes=True)
-
     updated_at: datetime
 
 is_deleted: bool
 
 deleted_at: datetime | None = None
     
+# Allows conversion from SQLAlchemy objects to Pydantic models
+model_config = ConfigDict(from_attributes=True)
+
+
 # Request schema used when creating a visit record
 class VisitCreate(BaseModel):
     visit_date: datetime
@@ -58,6 +59,7 @@ class VisitResponse(BaseModel):
     notes: str
 
     created_at: datetime
+    updated_at: datetime
 
     # Allows conversion from SQLAlchemy objects to Pydantic models
     model_config = ConfigDict(
@@ -75,5 +77,9 @@ class OwnerResponse(BaseModel):
     phone: str
     email: str
     created_at: datetime
+
+
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
