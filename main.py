@@ -4,8 +4,8 @@ from database import engine, get_db, Base
 from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
-from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, OwnerCreate, OwnerResponse
-from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits
+from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse
+from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit
 
 
 
@@ -173,3 +173,55 @@ def create_owner(owner: OwnerCreate, db: Session = Depends(get_db)):
 def get_owners(db: Session = Depends(get_db)):
 
     return db.query(Owner).all()
+
+
+
+@app.put(
+    "/visits/{visit_id}",
+    response_model=VisitResponse,
+    tags=["Visits"]
+)
+def edit_visit(
+    visit_id: int,
+    visit: VisitUpdate,
+    db: Session = Depends(get_db)
+):
+
+    updated_visit = update_visit(
+        db,
+        visit_id,
+        visit
+    )
+
+    if updated_visit is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Visit not found"
+        )
+
+    return updated_visit
+
+
+@app.delete(
+    "/visits/{visit_id}",
+    tags=["Visits"]
+)
+def remove_visit(
+    visit_id: int,
+    db: Session = Depends(get_db)
+):
+
+    deleted = delete_visit(
+        db,
+        visit_id
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Visit not found"
+        )
+
+    return {
+        "message": "Visit deleted successfully"
+    }

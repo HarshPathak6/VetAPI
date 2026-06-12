@@ -10,8 +10,7 @@ def create_pet(db: Session, pet: PetCreate):
         species=pet.species,
         breed=pet.breed,
         age=pet.age,
-        owner_name=pet.owner_name,
-        owner_phone=pet.owner_phone
+        owner_id=pet.owner_id
     )
 
     #Add the pet to the current database session
@@ -44,8 +43,7 @@ def update_pet(db: Session, pet_id: int, pet_data: PetCreate):
     pet.species = pet_data.species
     pet.breed = pet_data.breed
     pet.age = pet_data.age
-    pet.owner_name = pet_data.owner_name
-    pet.owner_phone = pet_data.owner_phone
+    pet.owner_id = pet_data.owner_id
 
     #Save updated information
     db.commit()
@@ -105,3 +103,36 @@ def get_pet_visits(
         )
         .all()
     )
+
+def update_visit(db, visit_id, visit_data):
+
+    visit = db.query(Visit).filter(
+
+        Visit.id == visit_id
+    ).first()
+
+    if visit is None:
+        return None
+    
+    visit.visit_date = visit_data.visit_date
+    visit.reason = visit_data.reason
+    visit.notes = visit_data.notes
+
+    db.commit()
+    db.refresh(visit)
+
+    return visit
+
+def delete_visit(db, visit_id):
+
+    visit = db.query(Visit).filter(
+        Visit.id == visit_id
+    ).first()
+
+    if visit is None:
+        return False
+
+    db.delete(visit)
+    db.commit()
+
+    return True
