@@ -12,6 +12,6 @@ class Owner(Base):
     name = Column(String)
     phone = Column(String)
     email = Column(String, unique=True)
-    Created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     pets = relationship("Pet", back_populates="owner")

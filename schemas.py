@@ -8,8 +8,7 @@ class PetCreate(BaseModel):
     breed: str
     age: int
 
-    owner_name: str
-    owner_phone: str
+    owner_id: int
 
 # Response schema returned by pet-related endpoints
 class PetResponse(BaseModel):
@@ -20,8 +19,7 @@ class PetResponse(BaseModel):
     breed: str
     age: int
 
-    owner_name: str
-    owner_phone: str
+    owner_id: int
 
     created_at: datetime
 
@@ -37,7 +35,11 @@ class VisitCreate(BaseModel):
 
     notes: str
 
-
+class VisitUpdate(BaseModel):
+    visit_date: datetime
+    reason: str
+    notes: str
+    
 # Response schema returned by visit-related endpoints
 class VisitResponse(BaseModel):
     id: int
