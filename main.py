@@ -30,10 +30,37 @@ def add_pet(pet: PetCreate, db: Session = Depends(get_db)):
     return create_pet(db, pet)
 
 
-@app.get("/pets", response_model=list[PetResponse],tags=["Pets"])
-def read_all_pets(db: Session = Depends(get_db)):
-# Retrieve all pets stored in the system
-    return get_pets(db)
+@app.get(
+    "/pets",
+    response_model=list[PetResponse],
+    tags=["Pets"]
+)
+def read_all_pets(
+    species: str | None = None,
+    breed: str | None = None,
+    owner_name: str | None = None,
+    min_age: int | None = None,
+    max_age: int | None = None,
+    search: str | None = None,
+    page: int = 1,
+    limit: int = 10,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+    db: Session = Depends(get_db)
+):
+    return get_pets(
+        db,
+        species,
+        breed,
+        owner_name,
+        min_age,
+        max_age,
+        search,
+        page,
+        limit,
+        sort_by,
+        sort_order
+    )
 
 @app.get("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
 def read_pet(pet_id: int, db: Session = Depends(get_db)):
