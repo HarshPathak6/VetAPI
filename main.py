@@ -1,15 +1,68 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.responses import JSONResponse
+import time
+import logging
 from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
 from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse
-from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit
+from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s"
+)
 
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+
+    start_time = time.time()
+
+    response = await call_next(request)
+
+    process_time = time.time() - start_time
+
+    logger.info(
+        f"Method={request.method} |"
+        f"Path={request.url.path} |"
+        f"Status={response.status_code} |"
+        f"ResponseTime={process_time:.4f}s |"
+    )
+
+    return response
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+    request: Request,
+    exc: HTTPException
+):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": exc.detail
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(
+    request: Request,
+    exc: Exception
+):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": "Internal Server Error"
+        }
+    )
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,10 +83,37 @@ def add_pet(pet: PetCreate, db: Session = Depends(get_db)):
     return create_pet(db, pet)
 
 
-@app.get("/pets", response_model=list[PetResponse],tags=["Pets"])
-def read_all_pets(db: Session = Depends(get_db)):
-# Retrieve all pets stored in the system
-    return get_pets(db)
+@app.get(
+    "/pets",
+    response_model=list[PetResponse],
+    tags=["Pets"]
+)
+def read_all_pets(
+    species: str | None = None,
+    breed: str | None = None,
+    owner_name: str | None = None,
+    min_age: int | None = None,
+    max_age: int | None = None,
+    search: str | None = None,
+    page: int = 1,
+    limit: int = 10,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+    db: Session = Depends(get_db)
+):
+    return get_pets(
+        db,
+        species,
+        breed,
+        owner_name,
+        min_age,
+        max_age,
+        search,
+        page,
+        limit,
+        sort_by,
+        sort_order
+    )
 
 @app.get("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
 def read_pet(pet_id: int, db: Session = Depends(get_db)):
@@ -134,24 +214,29 @@ def read_visits(
     db: Session = Depends(get_db)
 ):
 
-# Verify that the pet exists
     pet = get_pet(
         db,
         pet_id
     )
 
-# Return 404 if pet cannot be found
     if pet is None:
         raise HTTPException(
             status_code=404,
             detail="Pet not found"
         )
 
-# Return all visits associated with the pet
-    return get_pet_visits(
+    visits = get_pet_visits(
         db,
         pet_id
     )
+
+    if not visits:
+        raise HTTPException(
+            status_code=404,
+            detail="No visits found for this pet"
+        )
+
+    return visits
 
 
 @app.post("/owners", response_model=OwnerResponse, tags=["Owners"])
@@ -225,3 +310,37 @@ def remove_visit(
     return {
         "message": "Visit deleted successfully"
     }
+
+
+@app.get(
+    "/owners/{owner_id}/pets",
+    response_model=list[PetResponse],
+    tags=["Owners"]
+)
+def read_owner_pets(
+    owner_id: int,
+    db: Session = Depends(get_db)
+):
+
+    owner = db.query(Owner).filter(
+        Owner.id == owner_id
+    ).first()
+
+    if owner is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Owner not found"
+        )
+
+    pets = get_owner_pets(
+        db,
+        owner_id
+    )
+
+    if not pets:
+        raise HTTPException(
+            status_code=404,
+            detail="No pets found for this owner"
+        )
+
+    return pets

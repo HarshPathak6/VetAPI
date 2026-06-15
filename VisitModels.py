@@ -37,3 +37,9 @@ class Visit(Base):
     "Pet",
     back_populates="visits"
 )
+    
+    updated_at = Column(
+    DateTime,
+    default=datetime.utcnow,
+    onupdate=datetime.utcnow
+)

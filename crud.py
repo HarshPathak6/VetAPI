@@ -2,6 +2,10 @@ from sqlalchemy.orm import Session
 from PetModels import Pet
 from schemas import PetCreate, VisitCreate
 from VisitModels import Visit
+from OwnerModels import Owner
+from sqlalchemy import asc, desc
+from datetime import datetime
+
 
 def create_pet(db: Session, pet: PetCreate):
     # Create a new Pet model instance using request data
@@ -22,13 +26,97 @@ def create_pet(db: Session, pet: PetCreate):
 
     return db_pet
 
-def get_pets(db: Session):
-    #Retrieve all pets from the database
-    return db.query(Pet).all()
+def get_pets(
+    db: Session,
+    species=None,
+    breed=None,
+    owner_name=None,
+    min_age=None,
+    max_age=None,
+    search=None,
+    page=1,
+    limit=10,
+    sort_by="id",
+    sort_order="asc"
+):
+    query = db.query(Pet).filter(
+    Pet.is_deleted == False
+)
+
+    # Search by pet name
+    if search:
+        query = query.filter(
+            Pet.name.ilike(f"%{search}%")
+        )
+
+    # Filter by species
+    if species:
+        query = query.filter(
+            Pet.species == species
+        )
+
+    # Filter by breed
+    if breed:
+        query = query.filter(
+            Pet.breed == breed
+        )
+
+    # Filter by owner name
+    if owner_name:
+        query = (
+            query.join(Owner)
+            .filter(
+                Owner.name.ilike(f"%{owner_name}%")
+            )
+        )
+
+    # Minimum age
+    if min_age is not None:
+        query = query.filter(
+            Pet.age >= min_age
+        )
+
+    # Maximum age
+    if max_age is not None:
+        query = query.filter(
+            Pet.age <= max_age
+        )
+
+    # Sorting
+    allowed_fields = {
+        "name": Pet.name,
+        "age": Pet.age,
+        "created_at": Pet.created_at,
+        "id": Pet.id
+    }
+
+    sort_column = allowed_fields.get(
+        sort_by,
+        Pet.id
+    )
+
+    if sort_order.lower() == "desc":
+        query = query.order_by(
+            desc(sort_column)
+        )
+    else:
+        query = query.order_by(
+            asc(sort_column)
+        )
+
+    # Pagination
+    offset = (page - 1) * limit
+
+    query = query.offset(offset).limit(limit)
+
+    return query.all()
 
 def get_pet(db: Session, pet_id: int):
     #Search for a pet using its unique ID
-    return db.query(Pet).filter(Pet.id == pet_id).first()
+    return db.query(Pet).filter(
+    Pet.id == pet_id,
+    Pet.is_deleted == False
+    ).first()
 
 def update_pet(db: Session, pet_id: int, pet_data: PetCreate):
     # Find the pet that needs to be updated
@@ -61,10 +149,11 @@ def delete_pet(db: Session, pet_id: int):
     if pet is None:
         return None
 
-    #Delete pet and associated visits through cascade rules
-    db.delete(pet)
-    #Commit deletion to database
+    pet.is_deleted = True
+    pet.deleted_at = datetime.utcnow()
+
     db.commit()
+    db.refresh(pet)
 
     return pet
     
@@ -136,3 +225,6 @@ def delete_visit(db, visit_id):
     db.commit()
 
     return True
+
+def get_owner_pets(db, owner_id: int):
+    return db.query(Pet).filter(Pet.owner_id == owner_id).all()

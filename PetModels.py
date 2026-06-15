@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -20,6 +20,21 @@ class Pet(Base):
     # Timestamp when the pet record was created
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    is_deleted = Column(
+        Boolean,
+        default=False
+    )
+
+    deleted_at = Column(
+        DateTime,
+        nullable=True,
+    )
     # One-to-many relationship:
     # One pet can have multiple visits
     # Deleting a pet also deletes all associated visits
