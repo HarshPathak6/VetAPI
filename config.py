@@ -1,4 +1,6 @@
-# Loads values from .env file
+# Config.py
+# ds values from .env file
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
