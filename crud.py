@@ -225,3 +225,6 @@ def delete_visit(db, visit_id):
     db.commit()
 
     return True
+
+def get_owner_pets(db, owner_id: int):
+    return db.query(Pet).filter(Pet.owner_id == owner_id).all()

@@ -8,7 +8,7 @@ from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
 from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse
-from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit
+from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,10 +30,10 @@ async def log_requests(request: Request, call_next):
     process_time = time.time() - start_time
 
     logger.info(
-        f"Method={request.method} "
-        f"Path={request.url.path} "
-        f"Status={response.status_code} "
-        f"ResponseTime={process_time:.4f}s"
+        f"Method={request.method} |"
+        f"Path={request.url.path} |"
+        f"Status={response.status_code} |"
+        f"ResponseTime={process_time:.4f}s |"
     )
 
     return response
@@ -214,24 +214,29 @@ def read_visits(
     db: Session = Depends(get_db)
 ):
 
-# Verify that the pet exists
     pet = get_pet(
         db,
         pet_id
     )
 
-# Return 404 if pet cannot be found
     if pet is None:
         raise HTTPException(
             status_code=404,
             detail="Pet not found"
         )
 
-# Return all visits associated with the pet
-    return get_pet_visits(
+    visits = get_pet_visits(
         db,
         pet_id
     )
+
+    if not visits:
+        raise HTTPException(
+            status_code=404,
+            detail="No visits found for this pet"
+        )
+
+    return visits
 
 
 @app.post("/owners", response_model=OwnerResponse, tags=["Owners"])
@@ -305,3 +310,37 @@ def remove_visit(
     return {
         "message": "Visit deleted successfully"
     }
+
+
+@app.get(
+    "/owners/{owner_id}/pets",
+    response_model=list[PetResponse],
+    tags=["Owners"]
+)
+def read_owner_pets(
+    owner_id: int,
+    db: Session = Depends(get_db)
+):
+
+    owner = db.query(Owner).filter(
+        Owner.id == owner_id
+    ).first()
+
+    if owner is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Owner not found"
+        )
+
+    pets = get_owner_pets(
+        db,
+        owner_id
+    )
+
+    if not pets:
+        raise HTTPException(
+            status_code=404,
+            detail="No pets found for this owner"
+        )
+
+    return pets
