@@ -1,9 +1,15 @@
-# Loads values from .env file
+# Config.py
+# ds values from .env file
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Database connection string loaded from .env
     DATABASE_URL: str
+
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     # Tell Pydantic where to look for environment variables
     model_config = SettingsConfigDict(
@@ -12,3 +18,4 @@ class Settings(BaseSettings):
 
 # Create a settings object that can be imported throughout the project
 settings = Settings()
+
