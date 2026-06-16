@@ -2,6 +2,9 @@
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
+from pydantic import EmailStr
+from enum import Enum
+from uuid import UUID
 
 # Request schema used when creating or updating a pet
 class PetCreate(BaseModel):
@@ -85,3 +88,28 @@ class OwnerResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    VET = "VET"
+    RECEPTIONIST = "RECEPTIONIST"
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: UserRole
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: UUID
+    name: str
+    email: EmailStr
+    role: UserRole
+
+    class Config:
+        from_attributes = True

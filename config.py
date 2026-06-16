@@ -14,3 +14,7 @@ class Settings(BaseSettings):
 
 # Create a settings object that can be imported throughout the project
 settings = Settings()
+
+JWT_SECRET_KEY: str
+JWT_ALGORITHM: str
+ACCESS_TOKEN_EXPIRE_MINUTES: int
