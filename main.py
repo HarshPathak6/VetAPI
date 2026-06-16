@@ -9,8 +9,10 @@ from database import engine, get_db, Base
 from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
+from UserModels import User
 from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse, UserResponse, UserCreate
 from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
+from security import hash_password
 
 logging.basicConfig(
     level=logging.INFO,
@@ -366,6 +368,8 @@ def register_user(
             detail="Email already registered"
         )
 
+    print("PASSWORD:", user.password)
+    print("LENGTH:", len(user.password))
     hashed_password = hash_password(user.password)
 
     new_user = User(

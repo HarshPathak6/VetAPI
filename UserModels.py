@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, DateTime
 from database import Base
 import uuid
+import enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -42,3 +43,8 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    VET = "VET"
+    RECEPTIONIST = "RECEPTIONIST"
