@@ -10,9 +10,13 @@ from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
 from UserModels import User
-from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse, UserResponse, UserCreate, LoginRequest, TokenResponse
+from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse, UserResponse, UserCreate, LoginRequest, TokenResponse, UserContextResponse
 from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
 from security import hash_password, verify_password, create_access_token
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from config import settings
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +26,43 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials"
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+
+        user_id = payload.get("sub")
+
+        if user_id is None:
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if user is None:
+        raise credentials_exception
+
+    return user
 
 
 @app.middleware("http")
@@ -376,7 +417,7 @@ def register_user(
         name=user.name,
         email=user.email,
         password_hash=hashed_password,
-        role=user.role
+        role=user.role.value
     )
 
     db.add(new_user)
@@ -391,15 +432,15 @@ def register_user(
     response_model=TokenResponse
 )
 def login(
-    credentials: LoginRequest,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(
-        User.email == credentials.email
-    ).first()
+    User.email == form_data.username
+).first()
 
     if not user or not verify_password(
-        credentials.password,
+        form_data.password,
         user.password_hash
     ):
         raise HTTPException(
@@ -415,3 +456,15 @@ def login(
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+@app.get(
+    "/auth/user-context",
+    response_model=UserContextResponse,
+    tags=["Authentication"]
+)
+def get_user_context(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
+
