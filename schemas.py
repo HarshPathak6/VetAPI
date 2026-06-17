@@ -113,12 +113,15 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+class UserContextResponse(BaseModel):
+    id: UUID
+    name: str
+    email: str
+    role: str
+
+    class Config:
+        from_attributes = True
