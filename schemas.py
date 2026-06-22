@@ -12,18 +12,18 @@ class PetCreate(BaseModel):
     breed: str
     age: int
 
-    owner_id: int
+    owner_id: UUID
 
 # Response schema returned by pet-related endpoints
 class PetResponse(BaseModel):
-    id: int
+    id: UUID
 
     name: str
     species: str
     breed: str
     age: int
 
-    owner_id: int
+    owner_id: UUID
 
     created_at: datetime
 
@@ -52,9 +52,9 @@ class VisitUpdate(BaseModel):
     
 # Response schema returned by visit-related endpoints
 class VisitResponse(BaseModel):
-    id: int
+    id: UUID
 
-    pet_id: int
+    pet_id: UUID
 
     visit_date: datetime
 
@@ -76,7 +76,7 @@ class OwnerCreate(BaseModel):
     email: str
 
 class OwnerResponse(BaseModel):
-    id: int
+    id: UUID
     name: str
     phone: str
     email: str

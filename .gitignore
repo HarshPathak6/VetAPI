@@ -22,3 +22,5 @@ Thumbs.db
 # UV lock file
 uv.lock
 
+# Notes
+langchain.md 
