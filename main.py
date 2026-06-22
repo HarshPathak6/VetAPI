@@ -19,6 +19,7 @@ from config import settings
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from uuid import UUID
 from contextlib import asynccontextmanager
+from fastapi.exceptions import RequestValidationError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -126,6 +127,19 @@ async def general_exception_handler(
         content={
             "success": False,
             "message": "Internal Server Error"
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError
+):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "message": "Validation Error"
         }
     )
 
