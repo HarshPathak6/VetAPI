@@ -5,13 +5,14 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+from uuid import uuid4
 
 # SQLAlchemy model for storing pet information
 class Pet(Base):
     # Database table name
     __tablename__ = "pets"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
 
     name = Column(String)
     species = Column(String)

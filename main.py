@@ -18,6 +18,7 @@ from jose import JWTError, jwt
 from config import settings
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from uuid import UUID
+from contextlib import asynccontextmanager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +27,16 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app):
+
+    logger.info("Application startup")
+
+    yield
+
+    logger.info("Application shutdown")
+
+app = FastAPI(lifespan=lifespan)
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
@@ -36,6 +46,8 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
+    logger.warning("get_current_user was called")
+    
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials"
@@ -51,9 +63,11 @@ def get_current_user(
         user_id = payload.get("sub")
 
         if user_id is None:
+            logger.warning("Authentication failed")
             raise credentials_exception
 
     except JWTError:
+        logger.warning("Authentication failed: invalid JWT token")
         raise credentials_exception
 
     user = db.query(User).filter(
@@ -61,6 +75,7 @@ def get_current_user(
     ).first()
 
     if user is None:
+        logger.warning("Authentication failed")
         raise credentials_exception
 
     return user
@@ -102,6 +117,10 @@ async def general_exception_handler(
     request: Request,
     exc: Exception
 ):
+    logger.exception(
+    f"Unhandled exception: {str(exc)}"
+    )
+    
     return JSONResponse(
         status_code=500,
         content={
