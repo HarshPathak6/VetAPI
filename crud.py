@@ -7,6 +7,7 @@ from VisitModels import Visit
 from OwnerModels import Owner
 from sqlalchemy import asc, desc
 from datetime import datetime
+from uuid import UUID
 
 
 def create_pet(db: Session, pet: PetCreate):
@@ -113,14 +114,14 @@ def get_pets(
 
     return query.all()
 
-def get_pet(db: Session, pet_id: int):
+def get_pet(db: Session, pet_id: UUID):
     #Search for a pet using its unique ID
     return db.query(Pet).filter(
     Pet.id == pet_id,
     Pet.is_deleted == False
     ).first()
 
-def update_pet(db: Session, pet_id: int, pet_data: PetCreate):
+def update_pet(db: Session, pet_id: UUID, pet_data: PetCreate):
     # Find the pet that needs to be updated
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
 
@@ -143,7 +144,7 @@ def update_pet(db: Session, pet_id: int, pet_data: PetCreate):
     return pet
 
 
-def delete_pet(db: Session, pet_id: int):
+def delete_pet(db: Session, pet_id: UUID):
     #Locate pet before attempting deletion
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
 
@@ -161,7 +162,7 @@ def delete_pet(db: Session, pet_id: int):
     
 def create_visit(
     db: Session,
-    pet_id: int,
+    pet_id: UUID,
     visit_data: VisitCreate
 ):
     # Create a visit linked to the specified pet
@@ -184,7 +185,7 @@ def create_visit(
 
 def get_pet_visits(
     db: Session,
-    pet_id: int
+    pet_id: UUID
 ):
     # Retrieve all visits associated with a specific pet
     return (
@@ -228,5 +229,5 @@ def delete_visit(db, visit_id):
 
     return True
 
-def get_owner_pets(db, owner_id: int):
+def get_owner_pets(db, owner_id: UUID):
     return db.query(Pet).filter(Pet.owner_id == owner_id).all()

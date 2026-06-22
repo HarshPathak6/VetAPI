@@ -5,15 +5,28 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from config import settings
 from sqlalchemy.engine import Engine
 # import sqlite3
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 # Database connection string loaded from .env
-DATABASE_URL = settings.DATABASE_URL
+try:
 
-# Create SQLAlchemy engine used to communicate with the database
-engine = create_engine(
-    DATABASE_URL,
-    # connect_args={"check_same_thread": False}
-)
+    engine = create_engine(
+        settings.DATABASE_URL
+    )
+
+    logger.info(
+        "Database connection established"
+    )
+
+except Exception as e:
+
+    logger.error(
+        f"Database connection failed: {str(e)}"
+    )
+
+    raise
 
 # Enable SQLite foreign key constraints
 # Required for ON DELETE CASCADE to work properly

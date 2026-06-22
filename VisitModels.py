@@ -4,17 +4,18 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime
 from sqlalchemy.orm import relationship
 from database import Base
+from sqlalchemy.dialects.postgresql import UUID
 
 # SQLAlchemy model for storing veterinary visit records
 class Visit(Base):
     __tablename__ = "visits"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True)
 
     # Foreign key linking visit to a pet
     # CASCADE ensures visits are removed when the pet is deleted
     pet_id = Column(
-    Integer,
+    UUID(as_uuid=True),
     ForeignKey(
         "pets.id",
         ondelete="CASCADE"

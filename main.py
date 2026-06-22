@@ -17,6 +17,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from config import settings
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from uuid import UUID
+from contextlib import asynccontextmanager
+from fastapi.exceptions import RequestValidationError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +28,16 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app):
+
+    logger.info("Application startup")
+
+    yield
+
+    logger.info("Application shutdown")
+
+app = FastAPI(lifespan=lifespan)
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
@@ -35,6 +47,8 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
+    logger.warning("get_current_user was called")
+    
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials"
@@ -50,9 +64,11 @@ def get_current_user(
         user_id = payload.get("sub")
 
         if user_id is None:
+            logger.warning("Authentication failed")
             raise credentials_exception
 
     except JWTError:
+        logger.warning("Authentication failed: invalid JWT token")
         raise credentials_exception
 
     user = db.query(User).filter(
@@ -60,6 +76,7 @@ def get_current_user(
     ).first()
 
     if user is None:
+        logger.warning("Authentication failed")
         raise credentials_exception
 
     return user
@@ -101,11 +118,28 @@ async def general_exception_handler(
     request: Request,
     exc: Exception
 ):
+    logger.exception(
+    f"Unhandled exception: {str(exc)}"
+    )
+    
     return JSONResponse(
         status_code=500,
         content={
             "success": False,
             "message": "Internal Server Error"
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError
+):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "message": "Validation Error"
         }
     )
 
@@ -123,7 +157,7 @@ def home():
     status_code=status.HTTP_201_CREATED,
     tags=["Pets"]
 )
-def add_pet(pet: PetCreate, db: Session = Depends(get_db)):
+def add_pet(pet: PetCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 # Create a new pet record in the database
     return create_pet(db, pet)
 
@@ -161,7 +195,7 @@ def read_all_pets(
     )
 
 @app.get("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
-def read_pet(pet_id: int, db: Session = Depends(get_db)):
+def read_pet(pet_id: UUID, db: Session = Depends(get_db)):
 
 #Fetch pet by its unique ID
     pet = get_pet(db, pet_id)
@@ -176,9 +210,10 @@ def read_pet(pet_id: int, db: Session = Depends(get_db)):
 
 @app.put("/pets/{pet_id}", response_model=PetResponse, tags=["Pets"])
 def edit_pet(
-    pet_id: int,
+    pet_id: UUID,
     pet: PetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 # Update pet information using supplied data
     updated_pet = update_pet(
@@ -198,8 +233,9 @@ def edit_pet(
 
 @app.delete("/pets/{pet_id}", status_code=status.HTTP_200_OK, tags=["Pets"])
 def remove_pet(
-    pet_id: int,
-    db: Session = Depends(get_db)
+    pet_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ): 
 # Attempt to delete the pet from the database
     deleted_pet = delete_pet(db, pet_id)
@@ -223,9 +259,10 @@ def remove_pet(
     tags=["Visits"]
 )
 def add_visit(
-    pet_id: int,
+    pet_id: UUID,
     visit: VisitCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     
 # Check whether the specified pet exists
@@ -255,7 +292,7 @@ def add_visit(
     tags=["Visits"]
 )
 def read_visits(
-    pet_id: int,
+    pet_id: UUID,
     db: Session = Depends(get_db)
 ):
 
@@ -312,9 +349,10 @@ def get_owners(db: Session = Depends(get_db)):
     tags=["Visits"]
 )
 def edit_visit(
-    visit_id: int,
+    visit_id: UUID,
     visit: VisitUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     updated_visit = update_visit(
@@ -337,8 +375,9 @@ def edit_visit(
     tags=["Visits"]
 )
 def remove_visit(
-    visit_id: int,
-    db: Session = Depends(get_db)
+    visit_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     deleted = delete_visit(
@@ -363,7 +402,7 @@ def remove_visit(
     tags=["Owners"]
 )
 def read_owner_pets(
-    owner_id: int,
+    owner_id: UUID,
     db: Session = Depends(get_db)
 ):
 
