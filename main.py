@@ -20,6 +20,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from uuid import UUID
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +39,20 @@ async def lifespan(app):
     logger.info("Application shutdown")
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://id-preview-570f2f4d-0ae8-45a5-a1fc-d0d682d9e2fe.lovable.app",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login"
