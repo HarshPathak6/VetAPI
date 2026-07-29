@@ -12,7 +12,7 @@ from OwnerModels import Owner
 from UserModels import User
 from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse, UserResponse, UserCreate, LoginRequest, TokenResponse, UserContextResponse
 from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
-from security import hash_password, verify_password, create_access_token
+from security import hash_password, verify_password,create_access_token, get_current_user, require_admin, require_receptionist_or_admin, require_vet_or_admin
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from config import settings
@@ -172,7 +172,7 @@ def home():
     status_code=status.HTTP_201_CREATED,
     tags=["Pets"]
 )
-def add_pet(pet: PetCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def add_pet(pet: PetCreate, db: Session = Depends(get_db), current_user: User = Depends(require_receptionist_or_admin)):
 # Create a new pet record in the database
     return create_pet(db, pet)
 
@@ -250,7 +250,7 @@ def edit_pet(
 def remove_pet(
     pet_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ): 
 # Attempt to delete the pet from the database
     deleted_pet = delete_pet(db, pet_id)
@@ -277,7 +277,7 @@ def add_visit(
     pet_id: UUID,
     visit: VisitCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_receptionist_or_admin)
 ):
     
 # Check whether the specified pet exists
@@ -327,17 +327,11 @@ def read_visits(
         pet_id
     )
 
-    if not visits:
-        raise HTTPException(
-            status_code=404,
-            detail="No visits found for this pet"
-        )
-
     return visits
 
 
 @app.post("/owners", response_model=OwnerResponse, tags=["Owners"])
-def create_owner(owner: OwnerCreate, db: Session = Depends(get_db)):
+def create_owner(owner: OwnerCreate, db: Session = Depends(get_db), current_user: User = Depends(require_receptionist_or_admin)):
 
     db_owner = Owner(
         name=owner.name,
@@ -367,7 +361,7 @@ def edit_visit(
     visit_id: UUID,
     visit: VisitUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_receptionist_or_admin)
 ):
 
     updated_visit = update_visit(
@@ -392,7 +386,7 @@ def edit_visit(
 def remove_visit(
     visit_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_receptionist_or_admin)
 ):
 
     deleted = delete_visit(
@@ -451,7 +445,8 @@ def read_owner_pets(
 )
 def register_user(
     user: UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
 ):
     existing_user = db.query(User).filter(
         User.email == user.email
@@ -520,5 +515,7 @@ def get_user_context(
     current_user: User = Depends(get_current_user)
 ):
     return current_user
+
+
 
 
