@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 from config import settings
 from fastapi import Depends, HTTPException, status
 from UserModels import User, UserRole
-from main import get_current_user
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -37,40 +36,3 @@ def create_access_token(data: dict):
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM
     )
-
-
-def require_admin(current_user: User = Depends(get_current_user)):
-    if current_user.role != UserRole.ADMIN.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    return current_user
-
-
-def require_receptionist_or_admin(
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.role not in [
-        UserRole.ADMIN.value,
-        UserRole.RECEPTIONIST.value
-    ]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Receptionist or Admin access required"
-        )
-    return current_user
-
-
-def require_vet_or_admin(
-    current_user: User = Depends(get_current_user)
-):
-    if current_user.role not in [
-        UserRole.ADMIN.value,
-        UserRole.VET.value
-    ]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Veterinarian or Admin access required"
-        )
-    return current_user
