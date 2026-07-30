@@ -9,10 +9,10 @@ from database import engine, get_db, Base
 from PetModels import Pet
 from VisitModels import Visit
 from OwnerModels import Owner
-from UserModels import User
+from UserModels import User, UserRole
 from schemas import PetCreate, PetResponse, VisitCreate, VisitResponse, VisitUpdate, OwnerCreate, OwnerResponse, UserResponse, UserCreate, LoginRequest, TokenResponse, UserContextResponse
 from crud import create_pet, get_pet, get_pets, update_pet, delete_pet, create_visit, get_pet_visits, update_visit, delete_visit, get_owner_pets
-from security import hash_password, verify_password,create_access_token, get_current_user, require_admin, require_receptionist_or_admin, require_vet_or_admin
+from security import hash_password, verify_password, create_access_token
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from config import settings
@@ -96,6 +96,44 @@ def get_current_user(
 
     return user
 
+
+def require_admin(
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != UserRole.ADMIN.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
+
+
+def require_receptionist_or_admin(
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in [
+        UserRole.ADMIN.value,
+        UserRole.RECEPTIONIST.value
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Receptionist or Admin access required"
+        )
+    return current_user
+
+
+def require_vet_or_admin(
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in [
+        UserRole.ADMIN.value,
+        UserRole.VET.value
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vet or Admin access required"
+        )
+    return current_user
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -228,7 +266,7 @@ def edit_pet(
     pet_id: UUID,
     pet: PetCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_vet_or_admin)
 ):
 # Update pet information using supplied data
     updated_pet = update_pet(
